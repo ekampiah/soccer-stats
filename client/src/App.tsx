@@ -5,15 +5,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Button, Dropdown } from "semantic-ui-react";
 import { APIResponse } from "./model/APIResponse";
 import { TeamStats } from "./model/TeamStats";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 
 function App() {
   const [teams, setTeams] = useState<TeamInfo[]>([]);
@@ -117,7 +109,7 @@ function App() {
           multiple
           selection
           value={selectedTeams.map((team) => team.team.id)}
-          onChange={(e, data) => {
+          onChange={(_, data) => {
             if ((data.value as []).length > 5) {
               alert("You can only select up to 5 teams");
               return;
@@ -146,7 +138,7 @@ function App() {
           fluid
           selection
           value={selectedStat}
-          onChange={(e, data) => {
+          onChange={(_, data) => {
             setSelectedStat(data.value as string);
           }}
           options={stats.map((stat) => {
