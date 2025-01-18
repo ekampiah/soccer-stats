@@ -1,16 +1,20 @@
-import axios, { AxiosResponse } from "axios";
 import "./App.css";
 import { TeamInfo } from "./model/TeamInfo";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { Button, Dropdown } from "semantic-ui-react";
-import { APIResponse } from "./model/APIResponse";
+import { Button, Dropdown, Header } from "semantic-ui-react";
 import { TeamStats } from "./model/TeamStats";
 import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
+import agent from "./API/agent";
+
+interface Stat {
+  key: string;
+  label: string;
+}
 
 function App() {
   const [teams, setTeams] = useState<TeamInfo[]>([]);
   const [selectedTeams, setSelectedTeams] = useState<TeamInfo[]>([]);
-  const [selectedStat, setSelectedStat] = useState<string>("");
+  const [selectedStat, setSelectedStat] = useState<Stat>();
   const stats = [
     {
       key: "wins",
@@ -41,18 +45,9 @@ function App() {
 
   useEffect(() => {
     if (teams.length) return;
-    axios
-      .get<APIResponse<TeamInfo[]>>(
-        "https://api-football-v1.p.rapidapi.com/v3/teams?league=39&season=2024",
-        {
-          headers: {
-            "x-rapidapi-key":
-              "af8922a1a0msheb2867aee7c1922p1e6125jsnb48ed673fbed",
-          },
-        }
-      )
-      .then((res) => {
-        setTeams(res.data.response);
+    agent.API.Teams()
+      .then((teams) => {
+        setTeams(teams);
       })
       .catch((err) => {
         console.log(err);
@@ -68,31 +63,15 @@ function App() {
         return;
       }
 
-      var promises: Promise<AxiosResponse<APIResponse<TeamStats>>>[] = [];
+      var promises: Promise<TeamStats>[] = [];
       for (var team of selectedTeams) {
-        promises.push(
-          axios.get<APIResponse<TeamStats>>(
-            `https://api-football-v1.p.rapidapi.com/v3/teams/statistics?league=39&season=2024&team=${team.team.id}`,
-            {
-              headers: {
-                "x-rapidapi-key":
-                  "af8922a1a0msheb2867aee7c1922p1e6125jsnb48ed673fbed",
-              },
-            }
-          )
-        );
+        promises.push(agent.API.Stats(team.team.id));
       }
 
       var data: TeamStats[] = [];
       Promise.all(promises).then((res) => {
         for (var stat of res) {
-          data.push(
-            new TeamStats(
-              stat.data.response.fixtures,
-              stat.data.response.goals,
-              stat.data.response.team
-            )
-          );
+          data.push(new TeamStats(stat.fixtures, stat.goals, stat.team));
         }
         setChartData(data);
       });
@@ -137,9 +116,9 @@ function App() {
           placeholder="Select a stat"
           fluid
           selection
-          value={selectedStat}
+          value={selectedStat?.key}
           onChange={(_, data) => {
-            setSelectedStat(data.value as string);
+            setSelectedStat(stats.find((stat) => stat.key === data.value));
           }}
           options={stats.map((stat) => {
             return {
@@ -153,13 +132,14 @@ function App() {
       </form>
       {chartData.length > 0 && (
         <div>
+          <Header as="h2">Team Stats - {selectedStat?.label}</Header>
           <BarChart width={800} height={450} data={chartData}>
             <CartesianGrid strokeDasharray="5 5" />
             <XAxis dataKey="name" />
             <YAxis />
             <Tooltip />
             <Bar
-              dataKey={selectedStat}
+              dataKey={selectedStat?.key || ""}
               fill={`#${Math.floor(Math.random() * 16777215).toString(16)}`}
             />
           </BarChart>
