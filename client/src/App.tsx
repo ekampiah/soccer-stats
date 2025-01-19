@@ -1,7 +1,7 @@
 import "./App.css";
 import { TeamInfo } from "./model/TeamInfo";
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { Button, Dropdown, Header } from "semantic-ui-react";
+import { Button, Dropdown, Loader } from "semantic-ui-react";
 import { TeamStats } from "./model/TeamStats";
 import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import agent from "./API/agent";
@@ -57,6 +57,7 @@ function App() {
   const submit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      setChartData([]);
       if (selectedTeams.length === 0) {
         console.log("Please select teams");
 
@@ -130,9 +131,12 @@ function App() {
         />
         <Button type="submit">Submit</Button>
       </form>
-      {chartData.length > 0 && (
+      {chartData.length == 0 ? (
         <div>
-          <Header as="h2">Team Stats - {selectedStat?.label}</Header>
+          <Loader active inline="centered" content="Loading stats..." />
+        </div>
+      ) : (
+        <div>
           <BarChart width={800} height={450} data={chartData}>
             <CartesianGrid strokeDasharray="5 5" />
             <XAxis dataKey="name" />
