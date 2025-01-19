@@ -42,17 +42,20 @@ function App() {
     },
   ];
   const [chartData, setChartData] = useState<TeamStats[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingApp, setLoadingApp] = useState(true);
 
   useEffect(() => {
     if (teams.length) return;
     agent.API.Teams()
       .then((teams) => {
         setTeams(teams);
+        setLoadingApp(false);
       })
       .catch((err) => {
         console.log(err);
       });
-  }, [teams]);
+  }, [teams, loadingApp]);
 
   const submit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
@@ -63,6 +66,7 @@ function App() {
 
         return;
       }
+      setLoading(true);
 
       var promises: Promise<TeamStats>[] = [];
       for (var team of selectedTeams) {
@@ -75,10 +79,19 @@ function App() {
           data.push(new TeamStats(stat.fixtures, stat.goals, stat.team));
         }
         setChartData(data);
+        setLoading(false);
       });
     },
-    [selectedTeams]
+    [selectedTeams, loading]
   );
+
+  if (loadingApp) {
+    return (
+      <div>
+        <Loader active inline="centered" content="Loading app..." />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -132,9 +145,11 @@ function App() {
         <Button type="submit">Submit</Button>
       </form>
       {chartData.length == 0 ? (
-        <div>
-          <Loader active inline="centered" content="Loading stats..." />
-        </div>
+        loading && (
+          <div>
+            <Loader active inline="centered" content="Loading stats..." />
+          </div>
+        )
       ) : (
         <div>
           <BarChart width={800} height={450} data={chartData}>
