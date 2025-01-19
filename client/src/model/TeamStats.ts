@@ -1,35 +1,22 @@
-export interface Played {
-  home: number;
-  away: number;
-  total: number;
-}
-
-export interface Wins {
-  home: number;
-  away: number;
-  total: number;
-}
-
-export interface Draws {
-  home: number;
-  away: number;
-  total: number;
-}
-
-export interface Loses {
+export interface HomeAwayStat {
   home: number;
   away: number;
   total: number;
 }
 
 export interface Goals {
-  for: { total: { home: number; away: number; total: number } };
-  against: { total: { home: number; away: number; total: number } };
+  for: { total: HomeAwayStat };
+  against: { total: HomeAwayStat };
 }
 
 export class TeamStats {
   constructor(
-    public fixtures: { played: Played; wins: Wins; draws: Draws; loses: Loses },
+    public fixtures: {
+      played: HomeAwayStat;
+      wins: HomeAwayStat;
+      draws: HomeAwayStat;
+      loses: HomeAwayStat;
+    },
     public goals: Goals,
     public team: { id: number; name: string }
   ) {}
