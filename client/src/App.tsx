@@ -1,10 +1,12 @@
-import "./App.css";
 import { TeamInfo } from "./model/TeamInfo";
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { Button, Dropdown, Loader } from "semantic-ui-react";
+import { useCallback, useEffect, useState } from "react";
 import { TeamStats } from "./model/TeamStats";
-import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 import agent from "./API/agent";
+import "@mantine/core/styles.css";
+import "@mantine/charts/styles.css";
+import { Button, Loader, MultiSelect, Select } from "@mantine/core";
+import { BarChart } from "@mantine/charts";
+import { fakeTeams } from "./assets/FakeData";
 
 interface Stat {
   key: string;
@@ -13,9 +15,9 @@ interface Stat {
 
 function App() {
   const [teams, setTeams] = useState<TeamInfo[]>([]);
-  const [selectedTeams, setSelectedTeams] = useState<TeamInfo[]>([]);
-  const [selectedStat, setSelectedStat] = useState<Stat>();
-  const stats = [
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [selectedStat, setSelectedStat] = useState<string | null>();
+  const stats: Stat[] = [
     {
       key: "wins",
       label: "Wins",
@@ -57,114 +59,89 @@ function App() {
       });
   }, [teams, loadingApp]);
 
-  const submit = useCallback(
-    (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      setChartData([]);
-      if (selectedTeams.length === 0) {
-        console.log("Please select teams");
+  const submit = useCallback(() => {
+    setChartData([]);
+    if (selectedTeams.length === 0) {
+      alert("Select teams to fetch stats");
+      return;
+    }
+    setLoading(true);
 
-        return;
+    var promises: Promise<TeamStats>[] = [];
+    for (var team of selectedTeams) {
+      promises.push(
+        agent.API.Stats(teams.find((t) => t.team.name === team)!.team.id)
+      );
+    }
+
+    var data: TeamStats[] = [];
+    Promise.all(promises).then((res) => {
+      for (var stat of res) {
+        data.push(new TeamStats(stat.fixtures, stat.goals, stat.team));
       }
-      setLoading(true);
 
-      var promises: Promise<TeamStats>[] = [];
-      for (var team of selectedTeams) {
-        promises.push(agent.API.Stats(team.team.id));
-      }
-
-      var data: TeamStats[] = [];
-      Promise.all(promises).then((res) => {
-        for (var stat of res) {
-          data.push(new TeamStats(stat.fixtures, stat.goals, stat.team));
-        }
-        setChartData(data);
-        setLoading(false);
-      });
-    },
-    [selectedTeams, loading]
-  );
+      setChartData(data);
+      setLoading(false);
+    });
+  }, [selectedTeams, loading]);
 
   if (loadingApp) {
     return (
-      <div>
-        <Loader active inline="centered" content="Loading app..." />
+      <div className="flex justify-center items-center h-screen">
+        <Loader />
       </div>
     );
   }
 
   return (
-    <>
-      <form onSubmit={submit}>
-        <Dropdown
+    <div className="m-10">
+      <div className="md:grid md:grid-cols-12 md:items-end flex flex-col gap-5 mb-10 bg-white p-5 rounded-lg shadow-lg">
+        <MultiSelect
+          classNames={{ inputField: "inputField" }}
+          className="md:col-span-6 inputField text-black"
+          label="Teams"
           placeholder="Select up to 5 teams"
-          fluid
-          multiple
-          selection
-          value={selectedTeams.map((team) => team.team.id)}
-          onChange={(_, data) => {
-            if ((data.value as []).length > 5) {
-              alert("You can only select up to 5 teams");
-              return;
-            }
-
-            setSelectedTeams(
-              (data.value as [])
-                .map((id: number) =>
-                  teams.filter((team) => team.team.id === id)
-                )
-                .flat()
-            );
-          }}
-          options={teams
+          maxValues={5}
+          value={selectedTeams}
+          onChange={setSelectedTeams}
+          data={teams
             .sort((a, b) => a.team.name.localeCompare(b.team.name))
-            .map((team) => {
-              return {
-                key: team.team.id,
-                text: team.team.name,
-                value: team.team.id,
-              };
-            })}
+            .map((team) => team.team.name)}
         />
-        <Dropdown
-          placeholder="Select a stat"
-          fluid
-          selection
-          value={selectedStat?.key}
-          onChange={(_, data) => {
-            setSelectedStat(stats.find((stat) => stat.key === data.value));
-          }}
-          options={stats.map((stat) => {
-            return {
-              key: stat.key,
-              text: stat.label,
-              value: stat.key,
-            };
-          })}
+        <Select
+          className="md:col-span-4 text-black"
+          label="Statistic"
+          placeholder="Pick one"
+          onChange={setSelectedStat}
+          data={stats.map((stat) => stat.label)}
         />
-        <Button type="submit">Submit</Button>
-      </form>
-      {chartData.length == 0 ? (
-        loading && (
-          <div>
-            <Loader active inline="centered" content="Loading stats..." />
-          </div>
-        )
-      ) : (
-        <div>
-          <BarChart width={800} height={450} data={chartData}>
-            <CartesianGrid strokeDasharray="5 5" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip />
-            <Bar
-              dataKey={selectedStat?.key || ""}
-              fill={`#${Math.floor(Math.random() * 16777215).toString(16)}`}
-            />
-          </BarChart>
+        <Button className="md:col-span-2" onClick={submit}>
+          Submit
+        </Button>
+      </div>
+      {loading ? (
+        <div className="flex justify-center items-center h-screen">
+          <Loader />
         </div>
+      ) : chartData.length == 0 ? (
+        <></>
+      ) : (
+        <BarChart
+        className="text-black bg-white p-5 rounded-lg shadow-lg"
+          h={600}
+          data={chartData}
+          dataKey="name"
+          tickLine="y"
+          series={[
+            {
+              name:
+                stats.find((stat) => stat.label === selectedStat)?.key || "",
+              color: "blue.9",
+            },
+          ]}
+        />
       )}
-    </>
+    </div>
   );
 }
 
