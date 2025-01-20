@@ -1,5 +1,5 @@
 import { TeamInfo } from "./model/TeamInfo";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TeamStats } from "./model/TeamStats";
 import agent from "./API/agent";
 import "@mantine/core/styles.css";
@@ -68,18 +68,21 @@ function App() {
   }, [teams, loadingApp]);
 
   const submit = useCallback(() => {
+    setLoading(true);
     if (useFakeData) {
-      setChartData(fakeChartData.filter((data) => selectedTeams.includes(data.name)));
-      setLoading(false);
+      setChartData(
+        fakeChartData.filter((data) => selectedTeams.includes(data.name))
+      );
+      setLoading(chartData.length === 0);
       return;
     }
-    
+
     setChartData([]);
     if (selectedTeams.length === 0) {
       alert("Select teams to fetch stats");
+      setLoading(false);
       return;
     }
-    setLoading(true);
 
     var promises: Promise<TeamStats>[] = [];
     for (var team of selectedTeams) {
@@ -97,7 +100,31 @@ function App() {
       setChartData(data);
       setLoading(false);
     });
-  }, [selectedTeams, loading]);
+  }, [selectedTeams, loading, teams, chartData]);
+
+  const chart = useMemo(() => {
+    return loading ? (
+      <div className="flex justify-center items-center h-screen">
+        <Loader />
+      </div>
+    ) : chartData.length == 0 ? (
+      <></>
+    ) : (
+      <BarChart
+        className="text-black bg-white p-5 rounded-lg shadow-lg"
+        h={600}
+        data={chartData}
+        dataKey="name"
+        tickLine="y"
+        series={[
+          {
+            name: stats.find((stat) => stat.label === selectedStat)?.key || "",
+            color: "blue.9",
+          },
+        ]}
+      />
+    );
+  }, [loading, chartData, selectedStat]);
 
   if (loadingApp) {
     return (
@@ -133,28 +160,7 @@ function App() {
           Submit
         </Button>
       </div>
-      {loading ? (
-        <div className="flex justify-center items-center h-screen">
-          <Loader />
-        </div>
-      ) : chartData.length == 0 ? (
-        <></>
-      ) : (
-        <BarChart
-          className="text-black bg-white p-5 rounded-lg shadow-lg"
-          h={600}
-          data={chartData}
-          dataKey="name"
-          tickLine="y"
-          series={[
-            {
-              name:
-                stats.find((stat) => stat.label === selectedStat)?.key || "",
-              color: "blue.9",
-            },
-          ]}
-        />
-      )}
+      {chart}
     </div>
   );
 }
