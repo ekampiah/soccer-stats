@@ -69,7 +69,7 @@ function App() {
 
   const submit = useCallback(() => {
     if (useFakeData) {
-      setChartData(fakeChartData);
+      setChartData(fakeChartData.filter((data) => selectedTeams.includes(data.name)));
       setLoading(false);
       return;
     }
