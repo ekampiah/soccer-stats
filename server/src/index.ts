@@ -30,7 +30,6 @@ const handleClose = (uuid: string) => {
 
 const broadcast = (lastUserId: string) => {
   Object.keys(connections).forEach((uuid) => {
-    if (uuid === lastUserId) return;
     const connection = connections[uuid];
     const message = JSON.stringify(users[lastUserId]);
     connection.send(message);
@@ -42,12 +41,11 @@ wsServer.addListener(
   (connection: WebSocket, request: IncomingMessage) => {
     if (!request.url) return;
     const username = generateUsername();
-    console.log(`${username} connected`);
     const uuid = uuidv4();
     connections[uuid] = connection;
-    users[uuid] = { username, message: `${username} joined the chat` };
-    broadcast(uuid);
-
+    users[uuid] = { username };
+    console.log(`Joined chat as ${username}`)
+    connection.send(JSON.stringify(`Joined chat as ${username}`));
     connection.addEventListener("message", (message: MessageEvent) =>
       handleMessage(message.data, uuid)
     );

@@ -4,14 +4,32 @@ import { TeamStats } from "./model/TeamStats";
 import agent from "./API/agent";
 import "@mantine/core/styles.css";
 import "@mantine/charts/styles.css";
-import { Button, Loader, MultiSelect, Select } from "@mantine/core";
+import {
+  ActionIcon,
+  Button,
+  Loader,
+  MultiSelect,
+  Select,
+  TextInput,
+} from "@mantine/core";
 import { BarChart } from "@mantine/charts";
 import { fakeChartData, fakeTeams } from "./assets/FakeData";
+import { IconSend, IconX } from "@tabler/icons-react";
+import useWebSocket from "react-use-websocket";
+import ChatMessageListComponent from "./components/ChatMessageListComponent";
 
 interface Stat {
   key: string;
   label: string;
 }
+
+export interface ChatMessage {
+  username: string;
+  message: string;
+  time: string;
+}
+
+const WS_URL = "ws://localhost:8000";
 
 function App() {
   const [teams, setTeams] = useState<TeamInfo[]>([]);
@@ -46,8 +64,16 @@ function App() {
   const [chartData, setChartData] = useState<TeamStats[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingApp, setLoadingApp] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  const [chatMessage, setChatMessage] = useState<string>("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
-  const useFakeData = true;
+  const { sendJsonMessage, lastJsonMessage } = useWebSocket(WS_URL, {
+    share: true,
+  });
+
+  const useFakeData = false;
 
   useEffect(() => {
     if (teams.length) return;
@@ -102,6 +128,37 @@ function App() {
     });
   }, [selectedTeams, loading, teams, chartData]);
 
+  const sendChatMessage = useCallback(() => {
+    if (chatMessage) {
+      sendJsonMessage(chatMessage);
+      setChatMessage("");
+    }
+  }, [chatMessage]);
+
+  useEffect(() => {
+    if (!lastJsonMessage) return;
+    console.log(lastJsonMessage);
+
+    if (typeof lastJsonMessage === "string") {
+      console.log(lastJsonMessage);
+
+      setUsername(lastJsonMessage.split("Joined chat as")[1]);
+      return;
+    }
+
+    if (typeof lastJsonMessage === "object") {
+      let message: ChatMessage = lastJsonMessage as ChatMessage;
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          username: message.username,
+          message: message.message,
+          time: new Date().toLocaleTimeString(),
+        },
+      ]);
+    }
+  }, [lastJsonMessage]);
+
   const chart = useMemo(() => {
     return loading ? (
       <div className="flex justify-center items-center h-screen">
@@ -125,6 +182,39 @@ function App() {
       />
     );
   }, [loading, chartData, selectedStat]);
+
+  const chat = useMemo(() => {
+    if (!chatOpen)
+      return (
+        <div className="flex justify-around p-5 md:fixed md:bottom-0 md:right-0 md:z-20">
+          <Button onClick={() => setChatOpen(true)}>Click to open chat</Button>
+        </div>
+      );
+
+    return (
+      <div className="flex flex-col gap-5 p-5 mt-5 border border-solid border-black rounded-lg bg-white md:fixed md:bottom-0 md:right-0 md:h-[50%] md:w-[40%] md:z-20">
+        <ActionIcon onClick={() => setChatOpen(false)}>
+          <IconX />
+        </ActionIcon>
+        <ChatMessageListComponent messages={chatMessages} />
+        <div className="flex gap-2 items-end md:absolute md:bottom-0 md:right-0 md:m-5 md:w-[90%]">
+          <TextInput
+            className="w-full"
+            label={username || "Username"}
+            placeholder="Free your mind. Respectfully"
+            value={chatMessage}
+            onChange={(e) => setChatMessage(e.currentTarget.value)}
+            onKeyUp={(e) => {
+              if (e.key === "Enter") sendChatMessage();
+            }}
+          />
+          <ActionIcon onClick={sendChatMessage}>
+            <IconSend />
+          </ActionIcon>
+        </div>
+      </div>
+    );
+  }, [chatOpen, username, chatMessage, chatMessages]);
 
   if (loadingApp) {
     return (
@@ -161,6 +251,7 @@ function App() {
         </Button>
       </div>
       {chart}
+      {chat}
     </div>
   );
 }
