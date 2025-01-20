@@ -6,7 +6,7 @@ import "@mantine/core/styles.css";
 import "@mantine/charts/styles.css";
 import { Button, Loader, MultiSelect, Select } from "@mantine/core";
 import { BarChart } from "@mantine/charts";
-import { fakeTeams } from "./assets/FakeData";
+import { fakeChartData, fakeTeams } from "./assets/FakeData";
 
 interface Stat {
   key: string;
@@ -47,8 +47,16 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [loadingApp, setLoadingApp] = useState(true);
 
+  const useFakeData = true;
+
   useEffect(() => {
     if (teams.length) return;
+    if (useFakeData) {
+      setTeams(fakeTeams);
+      setLoadingApp(false);
+      return;
+    }
+
     agent.API.Teams()
       .then((teams) => {
         setTeams(teams);
@@ -60,6 +68,12 @@ function App() {
   }, [teams, loadingApp]);
 
   const submit = useCallback(() => {
+    if (useFakeData) {
+      setChartData(fakeChartData);
+      setLoading(false);
+      return;
+    }
+    
     setChartData([]);
     if (selectedTeams.length === 0) {
       alert("Select teams to fetch stats");
@@ -127,7 +141,7 @@ function App() {
         <></>
       ) : (
         <BarChart
-        className="text-black bg-white p-5 rounded-lg shadow-lg"
+          className="text-black bg-white p-5 rounded-lg shadow-lg"
           h={600}
           data={chartData}
           dataKey="name"
