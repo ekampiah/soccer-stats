@@ -6,7 +6,9 @@ import { generateUsername } from "unique-username-generator";
 const httpServer = createServer();
 const wsServer = new WebSocketServer({ server: httpServer });
 
-const port = 8000;
+const port = process.env.PORT || 8000;
+
+console.log("Starting WebSocket server on port " + port);
 
 const connections: { [id: string]: WebSocket } = {};
 const users: { [id: string]: { username: string; message?: string } } = {};
@@ -44,7 +46,7 @@ wsServer.addListener(
     const uuid = uuidv4();
     connections[uuid] = connection;
     users[uuid] = { username };
-    console.log(`Joined chat as ${username}`)
+    console.log(`Joined chat as ${username}`);
     connection.send(JSON.stringify(`Joined chat as ${username}`));
     connection.addEventListener("message", (message: MessageEvent) =>
       handleMessage(message.data, uuid)
