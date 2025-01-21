@@ -30,7 +30,7 @@ export interface ChatMessage {
 }
 
 console.log(import.meta.env);
-const WS_URL = import.meta.env.DEV ? "ws://localhost:3000" : "ws://myexpressapptest-node.azurewebsites.net/8080"
+const WS_URL = import.meta.env.DEV ? "ws://localhost:3000" : "wss://myexpressapptest-node.azurewebsites.net/8080"
 console.log(WS_URL);
 
 function App() {
