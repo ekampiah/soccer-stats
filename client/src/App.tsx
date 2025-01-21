@@ -29,7 +29,9 @@ export interface ChatMessage {
   time: string;
 }
 
-const WS_URL = "wss://172.208.50.48:8000";
+console.log(import.meta.env);
+const WS_URL = import.meta.env.DEV ? "ws://localhost:3000" : "ws://myexpressapptest-node.azurewebsites.net/8080"
+console.log(WS_URL);
 
 function App() {
   const [teams, setTeams] = useState<TeamInfo[]>([]);
