@@ -29,7 +29,7 @@ export interface ChatMessage {
   time: string;
 }
 
-const WS_URL = "ws://localhost:8000";
+const WS_URL = "ws://172.208.50.48:8000";
 
 function App() {
   const [teams, setTeams] = useState<TeamInfo[]>([]);
