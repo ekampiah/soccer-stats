@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {   
     "build-dev": "cd ../client && tsc -b && vite build",
-    "start": "node ./bin/www",
-    "dev": "NODE_ENV=development && npm run build-dev && npm start"
+    "start": "node ./bin/www"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",

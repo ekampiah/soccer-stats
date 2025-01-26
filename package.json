@@ -1,0 +1,13 @@
+{
+  "name": "soccer-stats",
+  "version": "1.0.0",
+  "description": "An API consumer that displays data visualizations for various EPL team statistics",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./myExpressApp/bin/www",
+    "dev": "cd ./myExpressApp && NODE_ENV=development && npm run build-dev && npm start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
