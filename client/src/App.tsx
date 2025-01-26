@@ -44,7 +44,7 @@ function App() {
     },
     {
       key: "draws",
-      label: "Draws",
+      label: "Draws2",
     },
     {
       key: "loses",

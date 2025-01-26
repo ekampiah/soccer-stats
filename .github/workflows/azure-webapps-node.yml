@@ -19,7 +19,7 @@
 
 on:
   push:
-    branches: [ "main", "node-server", "deploy-node-server-with-react-client" ]
+    branches: [ "main", "node-server" ]
   workflow_dispatch:
 
 env:
