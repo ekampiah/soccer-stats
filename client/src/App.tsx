@@ -30,7 +30,7 @@ export interface ChatMessage {
 }
 
 console.log(import.meta.env);
-const WS_URL = import.meta.env.DEV ? "ws://localhost:3000" : "wss://myexpressapptest-node.azurewebsites.net/8080"
+const WS_URL = import.meta.env.DEV ? "ws://localhost:3000" : "wss://soccer-stats-app.azurewebsites.net/8080"
 console.log(WS_URL);
 
 function App() {
@@ -44,7 +44,7 @@ function App() {
     },
     {
       key: "draws",
-      label: "Draws2",
+      label: "Draws",
     },
     {
       key: "loses",
@@ -139,11 +139,8 @@ function App() {
 
   useEffect(() => {
     if (!lastJsonMessage) return;
-    console.log(lastJsonMessage);
 
     if (typeof lastJsonMessage === "string") {
-      console.log(lastJsonMessage);
-
       setUsername(lastJsonMessage.split("Joined chat as")[1]);
       return;
     }

@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: myexpressapptest-node    # set this to your application's name
+  AZURE_WEBAPP_NAME: soccer-stats-app    # set this to your application's name
   AZURE_WEBAPP_PACKAGE_PATH: '.'      # set this to the path to your web app project, defaults to the repository root
   NODE_VERSION: '20.x'                # set this to the node version to use
 
@@ -43,14 +43,14 @@ jobs:
         cache: 'npm'
         cache-dependency-path: '**/package-lock.json'
 
-    - name: npm install and build client
+    - name: npm install and build client dependencies
       working-directory: ./client
       run: |
         npm install
-        npm run build --if-present
+        npm run build
         
-    - name: npm install and build server
-      working-directory: ./myExpressApp
+    - name: npm install server dependencies
+      working-directory: ./server
       run: |
         npm install
 
